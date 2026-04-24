@@ -14,7 +14,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="bottom-0">
+        <div className="">
           <ul className="flex space-x-4">
             <li>
               <a
