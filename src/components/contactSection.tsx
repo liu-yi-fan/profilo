@@ -1,5 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useActionState } from "react";
+import { submitContact } from "@/app/actions/contact";
+import { contactActionInitialState } from "@/app/actions/contact-types";
+
+// ── SVG Icons ────────────────────────────────────────────────────────────────
 
 const GitHubIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -13,33 +17,20 @@ const LinkedInIcon = () => (
   </svg>
 );
 
+// ── Component ────────────────────────────────────────────────────────────────
+
 const ContactSection = () => {
-  const [form, setForm] = useState({ name: "", email: "", organization: "", message: "" });
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("sending");
-    try {
-      // TODO: replace with actual submission endpoint
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setStatus("sent");
-      setForm({ name: "", email: "", organization: "", message: "" });
-    } catch {
-      setStatus("error");
-    }
-  };
+  const [state, formAction, pending] = useActionState(
+    submitContact,
+    contactActionInitialState
+  );
 
   return (
     <div className="py-8 h-screen">
       <h2 className="text-2xl font-bold mb-4">Contact</h2>
 
       <div className="flex flex-row gap-8 justify-between h-[calc(100%-4rem)]">
-        {/* Left: intro + social links */}
+        {/* ── Left: intro + social links ── */}
         <div className="flex flex-col gap-4">
           <p className="text-gray-700 dark:text-gray-300">
             This is the second section of the page.
@@ -47,7 +38,7 @@ const ContactSection = () => {
 
           <div className="flex flex-col gap-3 mt-2">
             <a
-              href="https://github.com"
+              href="https://github.com/your-username"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
@@ -56,7 +47,7 @@ const ContactSection = () => {
               <span>GitHub</span>
             </a>
             <a
-              href="https://linkedin.com"
+              href="https://linkedin.com/in/your-username"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -67,60 +58,96 @@ const ContactSection = () => {
           </div>
         </div>
 
-        {/* Right: contact form */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 max-w-1/2">
+        {/* ── Right: contact form ── */}
+        <form action={formAction} className="flex flex-col flex-1 max-w-md">
           <h3 className="text-xl font-semibold mb-2">Send a Message</h3>
 
+          {/* Success banner */}
+          {state.success && (
+            <p className="mb-3 text-sm text-green-600 dark:text-green-400">
+              {state.message}
+            </p>
+          )}
+
+          {/* Top-level error message */}
+          {!state.success && state.message && (
+            <p className="mb-3 text-sm text-red-600 dark:text-red-400">
+              {state.message}
+            </p>
+          )}
+
           <div className="flex flex-col gap-2 flex-1">
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              type="text"
-              placeholder="Your Name"
-              required
-              className="w-full p-2 border border-gray-300 rounded"
-            />
-            <input
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              type="email"
-              placeholder="Your Email"
-              required
-              className="w-full p-2 border border-gray-300 rounded"
-            />
-            <input
-              name="organization"
-              value={form.organization}
-              onChange={handleChange}
-              type="text"
-              placeholder="Organization"
-              className="w-full p-2 border border-gray-300 rounded"
-            />
-            <textarea
-              name="message"
-              value={form.message}
-              onChange={handleChange}
-              placeholder="Your Message"
-              required
-              className="w-full flex-1 mt-2 p-2 border border-gray-300 rounded resize-none"
-            />
+            {/* Name */}
+            <div>
+              <input
+                name="name"
+                type="text"
+                placeholder="Your Name"
+                required
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+              {state.errors?.name && (
+                <p className="mt-1 text-xs text-red-500">
+                  {state.errors.name[0]}
+                </p>
+              )}
+            </div>
+
+            {/* Email */}
+            <div>
+              <input
+                name="email"
+                type="email"
+                placeholder="Your Email"
+                required
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+              {state.errors?.email && (
+                <p className="mt-1 text-xs text-red-500">
+                  {state.errors.email[0]}
+                </p>
+              )}
+            </div>
+
+            {/* Organization */}
+            <div>
+              <input
+                name="organization"
+                type="text"
+                placeholder="Organization"
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+              {state.errors?.organization && (
+                <p className="mt-1 text-xs text-red-500">
+                  {state.errors.organization[0]}
+                </p>
+              )}
+            </div>
+
+            {/* Message */}
+            <div className="flex flex-col flex-1">
+              <textarea
+                name="message"
+                placeholder="Your Message"
+                required
+                className="w-full flex-1 mt-2 p-2 border border-gray-300 rounded resize-none"
+              />
+              {state.errors?.message && (
+                <p className="mt-1 text-xs text-red-500">
+                  {state.errors.message[0]}
+                </p>
+              )}
+            </div>
           </div>
 
+          {/* Submit — pinned to bottom-right */}
           <div className="flex justify-end mt-4">
-            {status === "sent" && (
-              <span className="text-green-600 mr-4 self-center text-sm">Message sent!</span>
-            )}
-            {status === "error" && (
-              <span className="text-red-600 mr-4 self-center text-sm">Something went wrong.</span>
-            )}
             <button
               type="submit"
-              disabled={status === "sending"}
+              disabled={pending}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {status === "sending" ? "Sending…" : "Send Message"}
+              {pending ? "Sending…" : "Send Message"}
             </button>
           </div>
         </form>
